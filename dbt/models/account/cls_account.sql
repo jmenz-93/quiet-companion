@@ -3,7 +3,7 @@
     incremental_strategy = 'merge',
     unique_key=['account_number', 'effective_date'],
     on_schema_change='sync_all_columns'
-)}}
+)} }
 
 WITH ranked AS (
     SELECT
@@ -38,7 +38,7 @@ WITH ranked AS (
             PARTITION BY t.account_number, t.effective_date
             ORDER BY t.raw_created_timestamp DESC
         ) AS row_num
-    FROM {{ref('typ_account')}} AS t
+    FROM {{ref('account_scd2')}} AS t
     LEFT JOIN {{ref("cls_products")}} AS p
         ON t.product_id = p.product_id
     WHERE
@@ -46,7 +46,7 @@ WITH ranked AS (
         {% if is_incremental() %}
             AND t.account_number IN (
                 SELECT t2.account_number
-                FROM {{ ref('typ_account') }} AS t2
+                FROM {{ ref('account_scd2') }} AS t2
                 WHERE t2.effective_date >= (SELECT MAX(t3.effective_date) FROM {{ this }} AS t3)
             )
         {% endif %}

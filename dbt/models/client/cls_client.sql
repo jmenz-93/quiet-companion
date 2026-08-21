@@ -33,11 +33,11 @@ WITH ranked AS (
             PARTITION BY t.ssn, t.effective_date
             ORDER BY t.raw_created_timestamp DESC
         ) AS row_num
-    FROM {{ref('typ_client')}} AS t
+    FROM {{ref('client_scd2')}} AS t
     {% if is_incremental() %}
         WHERE t.ssn IN (
             SELECT t2.ssn
-            FROM {{ ref('typ_client') }} AS t2
+            FROM {{ ref('client_scd2') }} AS t2
             WHERE t2.effective_date >= (SELECT MAX(t3.effective_date) FROM {{ this }} AS t3)
         )
     {% endif %}
