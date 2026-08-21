@@ -3,7 +3,7 @@
     incremental_strategy = 'merge',
     unique_key=['ssn', 'address_type', 'effective_start_date'],
     on_schema_change='sync_all_columns'
-)} }
+)}}
 
 WITH ranked AS (
     SELECT
