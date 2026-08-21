@@ -26,8 +26,8 @@ WITH ranked AS (
         t.finra_association,
         t.aml_flag,
         t.preferred_contact_method,
-        dbt_valid_from AS effective_start_date,
-        dbt_valid_to AS effective_end_date,
+        t.dbt_valid_from AS effective_start_date,
+        t.dbt_valid_to AS effective_end_date,
         ROW_NUMBER() OVER (
             PARTITION BY t.ssn, t.effective_date
             ORDER BY t.raw_created_timestamp DESC
