@@ -1,13 +1,12 @@
 {{config(
     materialized='incremental',
     incremental_strategy = 'merge',
-    unique_key=['account_number', 'effective_date'],
+    unique_key=['account_number', 'effective_start_date'],
     on_schema_change='sync_all_columns'
-)}}
+)} }
 
 WITH ranked AS (
     SELECT
-        t.effective_date,
         t.account_number,
         t.ssn,
         p.product_name,
@@ -32,8 +31,8 @@ WITH ranked AS (
         t.options_approved,
         t.beneficiary_designated,
         t.esg_preference,
-        t.raw_created_timestamp,
-        t.typ_created_timestamp,
+        dbt_valid_from AS effective_start_date,
+        dbt_valid_to AS effective_end_date,
         ROW_NUMBER() OVER (
             PARTITION BY t.account_number, t.effective_date
             ORDER BY t.raw_created_timestamp DESC
@@ -53,7 +52,6 @@ WITH ranked AS (
 )
 
 SELECT
-    effective_date,
     account_number,
     ssn,
     product_name,
@@ -78,8 +76,8 @@ SELECT
     options_approved,
     beneficiary_designated,
     esg_preference,
-    raw_created_timestamp,
-    typ_created_timestamp,
-    COALESCE((effective_date = MAX(effective_date) OVER (PARTITION BY account_number)), FALSE) AS is_current
+    effective_start_date,
+    effective_end_date,
+    (dbt_valid_to IS NULL) AS is_current
 FROM ranked
 WHERE row_num = 1
