@@ -1,13 +1,12 @@
 {{config(
     materialized='incremental',
     incremental_strategy = 'merge',
-    unique_key=['ssn', 'effective_date'],
+    unique_key=['ssn', 'effective_start_date'],
     on_schema_change='sync_all_columns'
 )}}
 
 WITH ranked AS (
     SELECT
-        t.effective_date,
         t.ssn,
         t.first_name,
         t.last_name,
@@ -27,8 +26,8 @@ WITH ranked AS (
         t.finra_association,
         t.aml_flag,
         t.preferred_contact_method,
-        t.raw_created_timestamp,
-        t.typ_created_timestamp,
+        t.dbt_valid_from AS effective_start_date,
+        t.dbt_valid_to AS effective_end_date,
         ROW_NUMBER() OVER (
             PARTITION BY t.ssn, t.effective_date
             ORDER BY t.raw_created_timestamp DESC
@@ -44,7 +43,6 @@ WITH ranked AS (
 )
 
 SELECT --noqa
-    effective_date,
     ssn,
     first_name,
     last_name,
@@ -65,8 +63,8 @@ SELECT --noqa
     finra_association,
     aml_flag,
     preferred_contact_method,
-    raw_created_timestamp,
-    typ_created_timestamp,
-    COALESCE((effective_date = MAX(effective_date) OVER (PARTITION BY ssn)), FALSE) AS is_current
+    effective_start_date,
+    effective_end_date,
+    (dbt_valid_to IS NULL) AS is_current
 FROM ranked
 WHERE row_num = 1
