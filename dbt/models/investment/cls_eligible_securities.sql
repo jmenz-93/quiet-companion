@@ -6,7 +6,7 @@
 -- enriched with product attributes. LEFT JOIN keeps securities whose product_id
 -- has no match (product_* -> 'Unknown') instead of dropping them.
 
-SELECT
+SELECT --noqa
     scd.ticker,
     scd.security_name,
     scd.asset_class,

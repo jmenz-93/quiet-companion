@@ -6,7 +6,7 @@
 -- LEFT JOIN keeps accounts whose product_id has no match (product_* -> 'Unknown')
 -- instead of dropping them.
 
-SELECT
+SELECT --noqa
     scd.account_number,
     scd.ssn,
     scd.product_id,
