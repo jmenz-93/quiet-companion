@@ -6,19 +6,19 @@
 -- enriched with product attributes. LEFT JOIN keeps securities whose product_id
 -- has no match (product_* -> 'Unknown') instead of dropping them.
 
-SELECT
+SELECT --noqa
     scd.ticker,
     scd.security_name,
     scd.asset_class,
     scd.security_category,
     scd.product_id,
     scd.eligible,
-    scd.effective_start_date,
-    scd.effective_end_date,
-    scd.is_current,
     COALESCE(p.product_name, 'Unknown') AS product_name,
     COALESCE(p.product_category, 'Unknown') AS product_category,
-    COALESCE(p.tax_status, 'Unknown') AS tax_status
+    COALESCE(p.tax_status, 'Unknown') AS tax_status,
+    scd.effective_start_date,
+    scd.effective_end_date,
+    scd.is_current
 FROM {{ scd2(
     ref('typ_eligible_securities'),
     partition_by=['ticker'],
