@@ -47,7 +47,7 @@ versioned AS (
     WHERE row_num = 1
 )
 
-SELECT
+SELECT --noqa
     ssn,
     first_name,
     last_name,
