@@ -29,12 +29,12 @@ SELECT
     scd.options_approved,
     scd.beneficiary_designated,
     scd.esg_preference,
-    scd.effective_start_date,
-    scd.effective_end_date,
-    scd.is_current,
     COALESCE(p.product_name, 'Unknown') AS product_name,
     COALESCE(p.product_category, 'Unknown') AS product_category,
-    COALESCE(p.tax_status, 'Unknown') AS tax_status
+    COALESCE(p.tax_status, 'Unknown') AS tax_status,
+    scd.effective_start_date,
+    scd.effective_end_date,
+    scd.is_current
 FROM {{ scd2(
     ref('typ_account'),
     partition_by=['account_number'],
