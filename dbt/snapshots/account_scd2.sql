@@ -7,6 +7,6 @@
   updated_at='raw_created_timestamp'
 ) }}
 
-select * from {{ ref('typ_account') }}
+    SELECT * FROM {{ ref('typ_account') }}
 
 {% endsnapshot %}
