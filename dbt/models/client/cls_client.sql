@@ -27,8 +27,8 @@ SELECT
     scd.preferred_contact_method,
     scd.effective_start_date,
     scd.effective_end_date,
-    EXTRACT(YEAR FROM AGE(scd.effective_start_date, scd.date_of_birth)) AS age,
-    scd.is_current
+    scd.is_current,
+    EXTRACT(YEAR FROM AGE(scd.effective_start_date, scd.date_of_birth)) AS age
 FROM {{ scd2(
     ref('typ_client'),
     partition_by=['ssn'],

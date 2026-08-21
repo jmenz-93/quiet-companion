@@ -6,8 +6,7 @@
 )}}
 
 
-
-SELECT 
+SELECT
     CAST(raw_eligible_securities.effective_date AS DATE) AS effective_date,
     raw_eligible_securities.ticker,
     raw_eligible_securities.security_name,
