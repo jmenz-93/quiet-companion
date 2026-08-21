@@ -1,12 +1,16 @@
-{{config(
-    materialized='incremental',
-    incremental_strategy = 'merge',
-    unique_key=['ssn', 'effective_start_date'],
-    on_schema_change='sync_all_columns'
-)}}
+{{ config(
+    materialized='table'
+) }}
 
-WITH ranked AS (
+-- SCD2 client dimension built directly from the effective-dated history in
+-- typ_client. We dedup late-arriving corrections to one row per
+-- (ssn, effective_date), then derive the validity interval with LEAD so the
+-- boundaries reflect the business effective_date. Full rebuild (table) is used
+-- because appending a new version must rewrite the prior row's end date.
+
+WITH deduped AS (
     SELECT
+        t.effective_date,
         t.ssn,
         t.first_name,
         t.last_name,
@@ -26,23 +30,24 @@ WITH ranked AS (
         t.finra_association,
         t.aml_flag,
         t.preferred_contact_method,
-        t.dbt_valid_from AS effective_start_date,
-        t.dbt_valid_to AS effective_end_date,
         ROW_NUMBER() OVER (
             PARTITION BY t.ssn, t.effective_date
             ORDER BY t.raw_created_timestamp DESC
         ) AS row_num
-    FROM {{ref('client_scd2')}} AS t
-    {% if is_incremental() %}
-        WHERE t.ssn IN (
-            SELECT t2.ssn
-            FROM {{ ref('client_scd2') }} AS t2
-            WHERE t2.effective_date >= (SELECT MAX(t3.effective_date) FROM {{ this }} AS t3)
-        )
-    {% endif %}
+    FROM {{ ref('typ_client') }} AS t
+),
+
+versioned AS (
+    SELECT
+        *,
+        LEAD(effective_date) OVER (
+            PARTITION BY ssn ORDER BY effective_date
+        ) AS effective_end_date
+    FROM deduped
+    WHERE row_num = 1
 )
 
-SELECT --noqa
+SELECT
     ssn,
     first_name,
     last_name,
@@ -63,8 +68,7 @@ SELECT --noqa
     finra_association,
     aml_flag,
     preferred_contact_method,
-    effective_start_date,
+    effective_date AS effective_start_date,
     effective_end_date,
-    (dbt_valid_to IS NULL) AS is_current
-FROM ranked
-WHERE row_num = 1
+    (effective_end_date IS NULL) AS is_current
+FROM versioned
