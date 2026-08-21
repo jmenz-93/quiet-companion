@@ -122,3 +122,14 @@ sources:
           - name: price
             data_tests:
               - not_null
+      - name: raw_eligible_securities
+        description: "Raw eligible securities data"
+        columns:
+          - name: effective_date
+            data_tests:
+              - not_null:
+                  config:
+                    severity: error
+          - name: ticker
+            data_tests:
+              - not_null 

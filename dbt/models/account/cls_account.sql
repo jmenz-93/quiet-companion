@@ -2,80 +2,50 @@
     materialized='table'
 ) }}
 
--- SCD2 account dimension built directly from the effective-dated history in
--- typ_account, enriched with product attributes. We dedup late-arriving
--- corrections to one row per (account_number, effective_date), derive the
--- validity interval with LEAD over all versions, then join product details.
--- Full rebuild (table) is used because appending a new version must rewrite the
--- prior row's end date.
-
-WITH deduped AS (
-    SELECT
-        t.effective_date,
-        t.account_number,
-        t.ssn,
-        t.product_id,
-        t.account_status,
-        t.date_opened,
-        t.date_closed,
-        t.last_review_date,
-        t.custodian,
-        t.advisor_code,
-        t.investment_objective,
-        t.risk_profile,
-        t.time_horizon,
-        t.rebalance_frequency,
-        t.annual_contribution,
-        t.management_fee,
-        t.margin_enabled,
-        t.options_approved,
-        t.beneficiary_designated,
-        t.esg_preference,
-        ROW_NUMBER() OVER (
-            PARTITION BY t.account_number, t.effective_date
-            ORDER BY t.raw_created_timestamp DESC
-        ) AS row_num
-    FROM {{ ref('typ_account') }} AS t
-),
-
-versioned AS (
-    SELECT
-        *,
-        LEAD(effective_date) OVER (
-            PARTITION BY account_number ORDER BY effective_date
-        ) AS effective_end_date
-    FROM deduped
-    WHERE row_num = 1
-)
+-- SCD2 account dimension (see scd2 macro), enriched with product attributes.
+-- LEFT JOIN keeps accounts whose product_id has no match (product_* -> 'Unknown')
+-- instead of dropping them.
 
 SELECT
-    v.account_number,
-    v.ssn,
-    p.product_name,
-    p.product_category,
-    p.tax_status,
+    scd.account_number,
+    scd.ssn,
+    scd.product_id,
     p.contribution_limit_2026,
     p.income_limit_2026,
     p.typical_time_horizon,
-    v.account_status,
-    v.date_opened,
-    v.date_closed,
-    v.last_review_date,
-    v.custodian,
-    v.advisor_code,
-    v.investment_objective,
-    v.risk_profile,
-    v.time_horizon,
-    v.rebalance_frequency,
-    v.annual_contribution,
-    v.management_fee,
-    v.margin_enabled,
-    v.options_approved,
-    v.beneficiary_designated,
-    v.esg_preference,
-    v.effective_date AS effective_start_date,
-    v.effective_end_date,
-    (v.effective_end_date IS NULL) AS is_current
-FROM versioned AS v
-INNER JOIN {{ ref('cls_products') }} AS p
-    ON v.product_id = p.product_id
+    scd.account_status,
+    scd.date_opened,
+    scd.date_closed,
+    scd.last_review_date,
+    scd.custodian,
+    scd.advisor_code,
+    scd.investment_objective,
+    scd.risk_profile,
+    scd.time_horizon,
+    scd.rebalance_frequency,
+    scd.annual_contribution,
+    scd.management_fee,
+    scd.margin_enabled,
+    scd.options_approved,
+    scd.beneficiary_designated,
+    scd.esg_preference,
+    scd.effective_start_date,
+    scd.effective_end_date,
+    scd.is_current,
+    COALESCE(p.product_name, 'Unknown') AS product_name,
+    COALESCE(p.product_category, 'Unknown') AS product_category,
+    COALESCE(p.tax_status, 'Unknown') AS tax_status
+FROM {{ scd2(
+    ref('typ_account'),
+    partition_by=['account_number'],
+    tracked_columns=[
+        'ssn', 'product_id', 'account_status', 'date_opened', 'date_closed',
+        'last_review_date', 'custodian', 'advisor_code',
+        'investment_objective', 'risk_profile', 'time_horizon',
+        'rebalance_frequency', 'annual_contribution', 'management_fee',
+        'margin_enabled', 'options_approved', 'beneficiary_designated',
+        'esg_preference'
+    ]
+) }} AS scd
+LEFT JOIN {{ ref('cls_products') }} AS p
+    ON scd.product_id = p.product_id
