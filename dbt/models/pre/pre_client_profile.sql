@@ -8,16 +8,9 @@ latest_address AS (
     SELECT DISTINCT ON (ssn) *
     FROM {{ ref('cls_client_address') }}
     WHERE is_current = TRUE
-),
-
-latest_account AS (
-    SELECT DISTINCT ON (account_number) *
-    FROM {{ ref('cls_account') }}
-    WHERE is_current = TRUE
 )
 
 SELECT
-    a.account_number,
     c.ssn AS client_ssn,
     c.first_name AS client_first_name,
     c.last_name AS client_last_name,
@@ -44,4 +37,3 @@ SELECT
     c.aml_flag AS client_anti_money_laundering_flag
 FROM latest_client AS c
 LEFT JOIN latest_address AS cca ON c.ssn = cca.ssn
-INNER JOIN latest_account AS a ON c.ssn = a.ssn
