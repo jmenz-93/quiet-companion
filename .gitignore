@@ -1,0 +1,10 @@
+target
+output
+edr_target
+logs
+.venv
+.env
+.DS_Store
+.vscode
+dbt_packages/
+.user.yml

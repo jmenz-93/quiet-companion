@@ -1,0 +1,17 @@
+[sqlfluff]
+dialect = postgres
+templater = jinja
+max_line_length = 120
+exclude_rules = L031,L036,L044
+
+[sqlfluff:indentation]
+tab_space_size = 4
+
+[sqlfluff:rules:capitalisation.keywords]
+capitalisation_policy = upper
+
+[sqlfluff:rules:capitalisation.identifiers]
+capitalisation_policy = upper
+
+[sqlfluff:templater:jinja]
+load_macros_from_path = .

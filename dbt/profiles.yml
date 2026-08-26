@@ -1,0 +1,25 @@
+quiet_companion:
+  target: prod
+  outputs:
+    prod:
+      type: postgres
+      host: "{{ env_var('DB_HOST') }}"
+      user: "{{ env_var('DB_USER') }}"
+      password: "{{ env_var('DB_PASSWORD') }}"
+      port: "{{ env_var('DB_PORT') | int }}"
+      dbname: "{{ env_var('DB_NAME') }}"
+      schema: DEFAULT_DBT
+      threads: 4
+
+elementary:
+  target: prod
+  outputs:
+    prod:
+      type: postgres
+      host: "{{ env_var('DB_HOST') }}"
+      user: "{{ env_var('DB_USER') }}"
+      password: "{{ env_var('DB_PASSWORD') }}"
+      port: "{{ env_var('DB_PORT') | int }}"
+      dbname: "{{ env_var('DB_NAME') }}"
+      schema: elementary
+      threads: 4

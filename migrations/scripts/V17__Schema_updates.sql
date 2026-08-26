@@ -1,0 +1,29 @@
+DROP TABLE quiet_companion.raw.raw_accounts;
+
+
+CREATE TABLE IF NOT EXISTS raw.raw_accounts (
+    effective_date TEXT,
+    account_number TEXT,
+    ssn TEXT,
+    product_id TEXT,
+    account_status TEXT,
+    date_opened TEXT,
+    date_closed TEXT,
+    last_review_date TEXT,
+    custodian TEXT,
+    advisor_code TEXT,
+    investment_objective TEXT,
+    risk_profile TEXT,
+    time_horizon TEXT,
+    rebalance_frequency TEXT,
+    annual_contribution TEXT,
+    management_fee TEXT,
+    equity_allocation TEXT,
+    fixed_income_allocation TEXT,
+    alternatives_allocation TEXT,
+    margin_enabled TEXT,
+    options_approved TEXT,
+    beneficiary_designated TEXT,
+    esg_preference TEXT,
+    raw_created_timestamp TIMESTAMP
+);

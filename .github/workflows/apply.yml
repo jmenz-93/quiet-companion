@@ -1,0 +1,110 @@
+name: Apply Flyway and Run dbt
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+  repository_dispatch:
+    types: [run-dbt]
+
+permissions:
+  contents: read
+concurrency:
+  group: production-dbt
+  cancel-in-progress: false
+env:
+  DB_PORT: ${{ secrets.DB_PORT }}
+  DB_HOST: ${{ secrets.DB_HOST }}
+  DB_USER: ${{ secrets.DB_USER }}
+  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+  DB_NAME: ${{ secrets.DB_NAME }}
+jobs:
+  migrate:
+    name: Run Flyway Migrations
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Run Flyway Migrations
+        uses: docker://flyway/flyway:12.6.2
+        env:
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        with:
+          args: -configFiles=migrations/flyway.conf -locations=filesystem:./migrations/scripts migrate
+
+  dbt-build:
+    name: Build dbt Models
+    needs: migrate
+    if: always() && !failure() && !cancelled()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dbt
+        run: pip install -r requirements.txt
+      - name: Install dbt Dependencies
+        run: dbt deps --project-dir dbt --profiles-dir dbt
+
+      - name: Build dbt Project
+        run: |
+          dbt build --target prod --project-dir dbt --profiles-dir dbt
+
+  dbt-full-refresh:
+    name: dbt Full Refresh (Warning!! Last Resort)
+    needs: dbt-build
+    if: always() && needs.dbt-build.result == 'failure' && github.event_name == 'repository_dispatch'
+    runs-on: ubuntu-latest
+    environment: dbt-full-refresh
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dbt
+        run: pip install -r requirements.txt
+      - name: Install dbt Dependencies
+        run: dbt deps --project-dir dbt --profiles-dir dbt
+      - name: Full refresh dbt Project
+        run: |
+          dbt build --target prod --project-dir dbt --profiles-dir dbt --full-refresh
+
+  elementary-report:
+    name: Send Elementary Report
+    needs: [dbt-build]
+    if: |
+      github.event_name == 'repository_dispatch' &&
+      github.event.action == 'run-dbt'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dbt and Elementary
+        run: pip install -r requirements.txt
+      - name: Install dbt Dependencies
+        run: dbt deps --project-dir dbt --profiles-dir dbt
+      - name: Run Elementary Models
+        run: |
+          dbt run --select elementary --target prod --project-dir dbt --profiles-dir dbt
+      - name: Generate and Send Elementary Report
+        if: always()
+        run: |
+          edr send-report \
+            --slack-token ${{ secrets.SLACK_TOKEN }} \
+            --slack-channel-name ${{ secrets.SLACK_CHANNEL_NAME }} \
+            --profiles-dir dbt \
+            --project-dir dbt

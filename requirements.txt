@@ -1,0 +1,5 @@
+dbt-core==1.9.1
+dbt-postgres==1.9.1
+sqlfluff==4.2.1
+sqlfluff-templater-dbt==4.2.1
+elementary-data[postgres]

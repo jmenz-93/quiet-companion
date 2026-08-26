@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS raw.raw_client (
+    effective_date TEXT,
+    ssn TEXT,
+    first_name TEXT,
+    last_name TEXT,
+    date_of_birth TEXT,
+    marital_status TEXT,
+    number_of_dependents TEXT,
+    email_address TEXT,
+    phone_number TEXT,
+    citizenship_status TEXT,
+    employment_status TEXT,
+    occupation TEXT,
+    employer_name TEXT,
+    annual_income_bracket TEXT,
+    estimated_net_worth_bracket TEXT,
+    education_level TEXT,
+    politically_exposed_person TEXT,
+    finra_association TEXT,
+    aml_flag TEXT,
+    preferred_contact_method TEXT,
+    raw_created_timestamp TIMESTAMP
+);

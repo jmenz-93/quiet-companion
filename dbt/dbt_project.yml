@@ -1,0 +1,38 @@
+name: 'quiet_companion'
+version: '1.0.0'
+config-version: 2
+
+profile: 'quiet_companion'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# Schemas for models and seeds
+models:
+  quiet_companion:
+    +materialized: view
+    account:
+      +schema: account
+    advisor:
+      +schema: advisor
+    client:
+      +schema: client
+    investment:
+      +schema: investment
+    pre:
+      +schema: pre
+      materialized: view
+  elementary:
+    +schema: elementary
+
+seeds:
+  quiet_companion:
+    schema: seeds

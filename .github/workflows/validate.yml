@@ -1,0 +1,47 @@
+name: Validate SQL Fluff and dbt Models
+
+on:
+  push:
+    branches-ignore:
+      - main  # Runs immediately on any branch push, but ignores merges into main
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DB_PORT: ${{ secrets.DB_PORT }}
+  DB_HOST: ${{ secrets.DB_HOST }}
+  DB_USER: ${{ secrets.DB_USER }}
+  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+  DB_NAME: ${{ secrets.DB_NAME }}
+
+jobs:
+  lint-and-dbt:
+    name: Lint and Compile dbt Models
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install SQLFluff and dbt
+        run: pip install -r requirements.txt
+
+      - name: Install dbt Dependencies
+        run: dbt deps --project-dir dbt --profiles-dir dbt
+
+      - name: Run SQLFluff Lint on Flyway Migrations
+        run: sqlfluff lint migrations/scripts --config migrations/.sqlfluff
+
+      - name: Run SQLFluff Lint on dbt Models
+        run: sqlfluff lint dbt/models/
+
+      - name: Compile dbt Models to Check for Syntax Errors
+        run: dbt compile --project-dir dbt --profiles-dir dbt

@@ -1,0 +1,9 @@
+dbt_packages/
+target/
+dbt_modules/
+macros/
+modules/
+site-packages/
+migrations/scripts/V8__Schemas_Vector_Table.sql
+migrations/scripts/V12__Trade_Schema.sql
+migrations/scripts/V16__Drop_Recreate.sql
