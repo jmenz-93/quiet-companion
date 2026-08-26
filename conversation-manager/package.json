@@ -1,0 +1,20 @@
+{
+  "name": "conversation-manager",
+  "version": "1.0.0",
+  "description": "Storage-agnostic conversation manager keyed by taxpayer identification number (TIN), with pluggable in-memory and Postgres backends.",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "migrate": "node src/db/migrate.js",
+    "example": "node examples/usage.js",
+    "test": "node test/memoryStore.test.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "pg": "^8.12.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED"
+}
